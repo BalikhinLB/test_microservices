@@ -1,5 +1,5 @@
 server:
-  port: 7004
+  port: 7003
 logging:
   level:
     root: INFO

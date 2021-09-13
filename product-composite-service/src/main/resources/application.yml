@@ -1,5 +1,15 @@
-server:
-  port: 7002
+server.port: 7000
+app:
+  product-service:
+    host: localhost
+    port: 7001
+  recommendation-service:
+    host: localhost
+    port: 7002
+  review-service:
+    host: localhost
+    port: 7003
+
 logging:
   level:
     root: INFO
