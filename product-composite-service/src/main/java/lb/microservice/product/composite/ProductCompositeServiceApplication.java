@@ -1,5 +1,10 @@
 package lb.microservice.product.composite;
 
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -10,13 +15,46 @@ import org.springframework.web.client.RestTemplate;
 @ComponentScan("lb.microservice")
 public class ProductCompositeServiceApplication {
 
-	@Bean
-	RestTemplate restTemplate(){
-		return new RestTemplate();
-	}
 
-	public static void main(String[] args) {
-		SpringApplication.run(ProductCompositeServiceApplication.class, args);
-	}
+    private String apiVersion;
+    private String apiTitle;
+    private String apiDescription;
+    private String apiContactName;
+    private String apiContactEmail;
+
+    @Autowired
+    public ProductCompositeServiceApplication(@Value("${api.common.version}") String apiVersion,
+                                              @Value("${api.common.title}") String apiTitle,
+                                              @Value("${api.common.description}") String apiDescription,
+                                              @Value("${api.common.contact.name}") String apiContactName,
+                                              @Value("${api.common.contact.email}") String apiContactEmail) {
+        this.apiVersion = apiVersion;
+        this.apiTitle = apiTitle;
+        this.apiDescription = apiDescription;
+        this.apiContactName = apiContactName;
+        this.apiContactEmail = apiContactEmail;
+    }
+
+
+    @Bean
+    RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
+    public OpenAPI getOpenApiDocumentation() {
+        return new OpenAPI()
+                .info(new Info().title(apiTitle)
+                        .description(apiDescription)
+                        .version(apiVersion)
+                        .contact(new Contact()
+                                .name(apiContactName)
+                                .email(apiContactEmail))
+                );
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(ProductCompositeServiceApplication.class, args);
+    }
 
 }
