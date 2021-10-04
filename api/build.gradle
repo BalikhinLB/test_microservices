@@ -13,11 +13,12 @@ repositories {
 
 ext {
     springBootVersion = '2.5.4'
+    springDocApiVaersion = "1.5.10"
 }
 
 dependencies {
     implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
-    implementation 'org.springdoc:springdoc-openapi-common:1.5.10'
+    implementation "org.springdoc:springdoc-openapi-common:${springDocApiVaersion}"
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

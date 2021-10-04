@@ -5,6 +5,8 @@ logging:
     root: INFO
     lb:
       microservice: DEBUG
+#for test
+spring.jpa.hibernate.ddl-auto: update
 ---
 spring:
   config:
