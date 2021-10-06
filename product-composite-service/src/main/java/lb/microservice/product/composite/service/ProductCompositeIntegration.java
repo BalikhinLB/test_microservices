@@ -66,7 +66,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
             if (product == null) {
                 log.warn("Not found product with id:{}", productId);
             } else {
-                log.debug("Found product with id:{}", product.productId());
+                log.debug("Found product with id:{}", product.getProductId());
             }
             return product;
         } catch (HttpClientErrorException ex) {
@@ -80,6 +80,16 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
                 }
             }
         }
+    }
+
+    @Override
+    public Product createProduct(Product body) {
+        return null;
+    }
+
+    @Override
+    public void deleteProduct(int productId) {
+        //TODO: realize
     }
 
     @Override

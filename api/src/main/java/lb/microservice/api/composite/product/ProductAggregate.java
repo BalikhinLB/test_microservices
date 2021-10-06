@@ -17,9 +17,9 @@ public class ProductAggregate {
     private final ServiceAddresses serviceAddresses;
 
     public ProductAggregate(Product product, List<RecommendationSummary> recommendations, List<ReviewSummary> reviews, ServiceAddresses serviceAddresses) {
-        this.productId = product.productId();
-        this.name = product.name();
-        this.weight = product.weight();
+        this.productId = product.getProductId();
+        this.name = product.getName();
+        this.weight = product.getWeight();
         this.recommendations = recommendations;
         this.reviews = reviews;
         this.serviceAddresses = serviceAddresses;
