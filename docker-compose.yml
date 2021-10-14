@@ -6,16 +6,25 @@ services:
     mem_limit: 512m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mongodb:
+        condition: service_healthy
   recommendation:
     build: recommendation-service
     mem_limit: 512m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mongodb:
+        condition: service_healthy
   review:
     build: review-service
     mem_limit: 512m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mysql:
+        condition: service_healthy
   product-composite:
     build: product-composite-service
     mem_limit: 512m
@@ -24,3 +33,33 @@ services:
       - 5005:5005
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+  mongodb:
+    image: mongo:5.0.3
+    mem_limit: 512m
+    ports:
+      - "27017:27017"
+    command: mongod
+    healthcheck:
+      test: "mongo --eval 'db.stats().ok'"
+      interval: 5s
+      timeout: 2s
+      retries: 60
+  mysql:
+    image: mysql:8.0.26
+    mem_limit: 512m
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpwd
+      - MYSQL_DATABASE=review-db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=pwd
+    healthcheck:
+      test: "/usr/bin/mysql --user=user --password=pwd --execute \"SHOW DATABASES;\""
+      interval: 5s
+      timeout: 2s
+      retries: 60
+#u can delete build images:      docker image prune --filter label=stage=builder
+#mongoDb CLI: docker-compose exec mongodb mongo ––quiet
+#MySQL CLI: docker-compose exec mysql mysql -uuser -p review-db
+#log microservise: docker-compose logs -f service_name

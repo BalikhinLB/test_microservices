@@ -5,8 +5,17 @@ logging:
     root: INFO
     lb:
       microservice: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 #for test
 spring.jpa.hibernate.ddl-auto: update
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost/review-db
+    username: user
+    password: pwd
+
+spring.datasource.hikari.initializationFailTimeout: 60000
 ---
 spring:
   config:
@@ -15,3 +24,6 @@ spring:
       - docker
 server:
     port: 8080
+
+spring.datasource:
+  url: jdbc:mysql://mysql/review-db

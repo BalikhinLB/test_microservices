@@ -1,4 +1,5 @@
 FROM adoptopenjdk:16_36-jdk-hotspot as builder
+LABEL stage=builder
 WORKDIR extracted
 ADD ./build/libs/*.jar app.jar
 RUN java -Djarmode=layertools -jar app.jar extract

@@ -1,5 +1,18 @@
 package lb.microservice.api.core.recommendation;
 
-public record Recommendation(int productId, int recommendationId, String author, int rate,
-                             String content, String serviceAddress) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public final class Recommendation {
+    private int productId;
+    private int recommendationId;
+    private String author;
+    private int rating;
+    private String content;
+    private String serviceAddress;
+
 }

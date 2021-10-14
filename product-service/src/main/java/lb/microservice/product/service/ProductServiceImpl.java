@@ -30,13 +30,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product getProduct(int productId) {
-        log.debug("/product return the found product for productId={}", productId);
         if (productId < 1) {
             throw new InvalidInputException("Invalid productId: " + productId);
         }
         ProductEntity entity = repository.findByProductId(productId)
                 .orElseThrow(() -> new NotFoundException("No product found for productId: " + productId));
         Product product = mapper.entityToApi(entity);
+        log.debug("/product return the found product for productId={}", productId);
         product.setServiceAddress(serviceUtil.getServiceAddress());
         return product;
     }
@@ -46,6 +46,7 @@ public class ProductServiceImpl implements ProductService {
         try {
             ProductEntity entity = mapper.apiToEntity(body);
             entity = repository.save(entity);
+            log.debug("createProduct: Product (productId:{}) created with id:{}", entity.getProductId(), entity.getId());
             return mapper.entityToApi(entity);
         } catch (DuplicateKeyException e) {
             throw new InvalidInputException("Duplicate key, Product Id: " + body.getProductId());
@@ -54,6 +55,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProduct(int productId) {
+        log.debug("deleteProduct: tries to delete product with productId: {}", productId);
         repository.findByProductId(productId).ifPresent(repository::delete);
     }
 }

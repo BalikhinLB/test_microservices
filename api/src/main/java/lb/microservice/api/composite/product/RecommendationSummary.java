@@ -1,4 +1,16 @@
 package lb.microservice.api.composite.product;
 
-public record RecommendationSummary(int recommendationId, String author, int rate, String content) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+public final class RecommendationSummary {
+    private int recommendationId;
+    private String author;
+    private int rate;
+    private String content;
+
 }

@@ -1,5 +1,18 @@
 package lb.microservice.api.core.review;
 
-public record Review(int productId, int reviewId, String author, String subject,
-                     String content, String serviceAddress) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public final class Review {
+    private int productId;
+    private int reviewId;
+    private String author;
+    private String subject;
+    private String content;
+    private String serviceAddress;
+
 }
