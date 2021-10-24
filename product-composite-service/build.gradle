@@ -16,6 +16,7 @@ jar {
 }
 ext{
 	springDocApiVaersion = "1.5.10"
+	springCloudVersion = "2020.0.4"
 }
 
 dependencies {
@@ -23,9 +24,19 @@ dependencies {
 	implementation project(':util')
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
+	implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
 	implementation "org.springdoc:springdoc-openapi-webflux-ui:${springDocApiVaersion}"
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.cloud:spring-cloud-stream::test-binder'
 	testImplementation 'io.projectreactor:reactor-test'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
 }
 
 test {

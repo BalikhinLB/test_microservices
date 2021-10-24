@@ -25,39 +25,39 @@ class PersistenceTests extends AbstractMongoDbTestBase {
 
     @BeforeEach
     public void setupDb() {
-        repository.deleteAll();
+        repository.deleteAll().block();
         RecommendationEntity entity = new RecommendationEntity(1, 1, "author_1", 5, "recommendation_1");
-        savedEntity = repository.save(entity);
+        savedEntity = repository.save(entity).block();
         assertEqualsRecommendations(entity, savedEntity);
     }
 
     @Test
     void create() {
         var newEntity = new RecommendationEntity(2, 1, "author_2", 4, "recommendation_2");
-        repository.save(newEntity);
-        RecommendationEntity foundEntity = repository.findById(newEntity.getId()).get();
+        repository.save(newEntity).block();
+        RecommendationEntity foundEntity = repository.findById(newEntity.getId()).block();
         assertEqualsRecommendations(newEntity, foundEntity);
-        assertEquals(2, repository.count());
+        assertEquals(2, repository.count().block());
     }
 
     @Test
     void update() {
         savedEntity.setAuthor("author_3");
-        repository.save(savedEntity);
-        RecommendationEntity foundEntity = repository.findById(savedEntity.getId()).get();
+        repository.save(savedEntity).block();
+        RecommendationEntity foundEntity = repository.findById(savedEntity.getId()).block();
         assertEquals(1, foundEntity.getVersion());
         assertEquals("author_3", foundEntity.getAuthor());
     }
 
     @Test
     void delete() {
-        repository.delete(savedEntity);
-        assertFalse(repository.existsById(savedEntity.getId()));
+        repository.delete(savedEntity).block();
+        assertFalse(repository.existsById(savedEntity.getId()).block());
     }
 
     @Test
     void getByProductId() {
-        List<RecommendationEntity> entityList = repository.findByProductId(savedEntity.getProductId());
+        List<RecommendationEntity> entityList = repository.findByProductId(savedEntity.getProductId()).collectList().block();
         assertThat(entityList, hasSize(1));
         assertEqualsRecommendations(savedEntity, entityList.get(0));
     }
@@ -66,20 +66,23 @@ class PersistenceTests extends AbstractMongoDbTestBase {
     void duplicateError() {
         RecommendationEntity entity = new RecommendationEntity(savedEntity.getProductId(),
                 savedEntity.getRecommendationId(), "author_4", 5, "recommendation_4");
-        assertThrows(DuplicateKeyException.class, () -> repository.save(entity));
+        var saveMono = repository.save(entity);
+        assertThrows(DuplicateKeyException.class, () -> saveMono.block());
     }
     @Test
     void optimisticLockError() {
-        RecommendationEntity entity1 = repository.findById(savedEntity.getId()).get();
-        RecommendationEntity entity2 = repository.findById(savedEntity.getId()).get();
+        RecommendationEntity entity1 = repository.findById(savedEntity.getId()).block();
+        RecommendationEntity entity2 = repository.findById(savedEntity.getId()).block();
 
         entity1.setAuthor("n1");
-        repository.save(entity1);
+        repository.save(entity1).block();
 
         entity2.setAuthor("n2");
-        assertThrows(OptimisticLockingFailureException.class, () -> repository.save(entity2));
+        var saveMono = repository.save(entity2);
+        assertThrows(OptimisticLockingFailureException.class, () -> saveMono.block());
 
-        RecommendationEntity updatedEntity = repository.findById(savedEntity.getId()).get();
+        RecommendationEntity updatedEntity = repository.findById(savedEntity.getId()).block();
+        assertNotNull(updatedEntity);
         assertEquals(1, (int) updatedEntity.getVersion());
         assertEquals("n1", updatedEntity.getAuthor());
     }

@@ -1,18 +1,25 @@
 package lb.microservice.recommendation;
 
 import lb.microservice.api.core.recommendation.Recommendation;
+import lb.microservice.api.event.Event;
+import lb.microservice.api.exceptions.InvalidInputException;
 import lb.microservice.recommendation.persistence.RecommendationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.util.function.Consumer;
+
+import static lb.microservice.api.event.Event.Type.CREATE;
+import static lb.microservice.api.event.Event.Type.DELETE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static reactor.core.publisher.Mono.just;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RecommendationServiceApplicationTests extends AbstractMongoDbTestBase {
@@ -22,9 +29,13 @@ class RecommendationServiceApplicationTests extends AbstractMongoDbTestBase {
     @Autowired
     private RecommendationRepository repository;
 
+    @Autowired
+    @Qualifier("messageProcessor")
+    private Consumer<Event<Integer, Recommendation>> messageProcessor;
+
     @BeforeEach
     void setupDb() {
-        repository.deleteAll();
+        repository.deleteAll().block();
     }
 
     @Test
@@ -32,11 +43,11 @@ class RecommendationServiceApplicationTests extends AbstractMongoDbTestBase {
 
         int productId = 1;
 
-        postAndVerifyRecommendation(productId, 1, HttpStatus.OK);
-        postAndVerifyRecommendation(productId, 2, HttpStatus.OK);
-        postAndVerifyRecommendation(productId, 3, HttpStatus.OK);
+        sendCreateRecommendationEvent(productId, 1);
+        sendCreateRecommendationEvent(productId, 2);
+        sendCreateRecommendationEvent(productId, 3);
 
-        assertEquals(3, repository.findByProductId(productId).size());
+        assertEquals(3, repository.findByProductId(productId).count().block());
 
         getAndVerifyRecommendationsByProductId(productId, HttpStatus.OK)
                 .jsonPath("$.length()").isEqualTo(3)
@@ -50,17 +61,13 @@ class RecommendationServiceApplicationTests extends AbstractMongoDbTestBase {
         int productId = 1;
         int recommendationId = 1;
 
-        postAndVerifyRecommendation(productId, recommendationId, HttpStatus.OK)
-                .jsonPath("$.productId").isEqualTo(productId)
-                .jsonPath("$.recommendationId").isEqualTo(recommendationId);
+        sendCreateRecommendationEvent(productId, recommendationId);
 
-        assertEquals(1, repository.count());
+        assertEquals(1, repository.count().block());
 
-        postAndVerifyRecommendation(productId, recommendationId, UNPROCESSABLE_ENTITY)
-                .jsonPath("$.path").isEqualTo("/recommendation")
-                .jsonPath("$.message").isEqualTo("Duplicate key, Product Id: 1, Recommendation Id:1");
+        assertThrows(InvalidInputException.class, () -> sendCreateRecommendationEvent(productId, recommendationId));
 
-        assertEquals(1, repository.count());
+        assertEquals(1, repository.count().block());
     }
 
 	@Test
@@ -69,13 +76,13 @@ class RecommendationServiceApplicationTests extends AbstractMongoDbTestBase {
 		int productId = 1;
 		int recommendationId = 1;
 
-		postAndVerifyRecommendation(productId, recommendationId, HttpStatus.OK);
-		assertEquals(1, repository.findByProductId(productId).size());
+        sendCreateRecommendationEvent(productId, recommendationId);
+        assertEquals(1, repository.findByProductId(productId).count().block());
 
-		deleteAndVerifyRecommendationsByProductId(productId, HttpStatus.OK);
-		assertEquals(0, repository.findByProductId(productId).size());
+        sendDeleteRecommendationEvent(productId);
+        assertEquals(0, repository.findByProductId(productId).count().block());
 
-		deleteAndVerifyRecommendationsByProductId(productId, HttpStatus.OK);
+        sendDeleteRecommendationEvent(productId);
 	}
 
     @Test
@@ -119,26 +126,15 @@ class RecommendationServiceApplicationTests extends AbstractMongoDbTestBase {
                 .expectBody();
     }
 
-    private WebTestClient.BodyContentSpec postAndVerifyRecommendation(int productId, int recommendationId, HttpStatus expectedStatus) {
-        Recommendation recommendation = new Recommendation(productId, recommendationId, "author " + recommendationId,
-                recommendationId, "content " + recommendationId, "SA");
-        return client.post()
-                .uri("/recommendation")
-                .body(just(recommendation), Recommendation.class)
-                .accept(APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isEqualTo(expectedStatus)
-				.expectHeader().contentType(APPLICATION_JSON)
-				.expectBody();
+    private void sendCreateRecommendationEvent(int productId, int recommendationId) {
+        Recommendation recommendation = new Recommendation(productId, recommendationId, "Author " + recommendationId, recommendationId, "Content " + recommendationId, "SA");
+        Event<Integer, Recommendation> event = new Event<>(CREATE, productId, recommendation);
+        messageProcessor.accept(event);
     }
 
-    private WebTestClient.BodyContentSpec deleteAndVerifyRecommendationsByProductId(int productId, HttpStatus expectedStatus) {
-		return client.delete()
-				.uri("/recommendation?productId=" + productId)
-				.accept(APPLICATION_JSON)
-				.exchange()
-				.expectStatus().isEqualTo(expectedStatus)
-				.expectBody();
+    private void sendDeleteRecommendationEvent(int productId) {
+        Event<Integer, Recommendation> event = new Event<>(DELETE, productId, null);
+        messageProcessor.accept(event);
     }
 
 }

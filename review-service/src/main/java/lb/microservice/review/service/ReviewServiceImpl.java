@@ -9,35 +9,47 @@ import lb.microservice.review.percistence.ReviewRepository;
 import lb.microservice.util.ServiceUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.logging.Level;
 
 @Slf4j
 @RestController
 public class ReviewServiceImpl implements ReviewService {
+
+    private final Scheduler jdbcScheduler;
     private final ServiceUtil serviceUtil;
     private final ReviewMapper mapper;
     private final ReviewRepository repository;
 
     @Autowired
-    public ReviewServiceImpl(ServiceUtil serviceUtil, ReviewMapper mapper, ReviewRepository repository) {
+    public ReviewServiceImpl(@Qualifier("jdbcScheduler") Scheduler jdbcScheduler, ServiceUtil serviceUtil, ReviewMapper mapper, ReviewRepository repository) {
         this.serviceUtil = serviceUtil;
         this.mapper = mapper;
         this.repository = repository;
+        this.jdbcScheduler = jdbcScheduler;
     }
 
     @Override
-    public List<Review> getReviews(int productId) {
+    public Flux<Review> getReviews(int productId) {
 
         if (productId < 1) {
             throw new InvalidInputException("Invalid productId: " + productId);
         }
+        return Mono.fromCallable(() -> getReviewsInternal(productId))
+                .flatMapMany(Flux::fromIterable)
+                .log(log.getName(), Level.FINE)
+                .subscribeOn(jdbcScheduler);
 
+    }
+
+    private List<Review> getReviewsInternal(int productId) {
         List<ReviewEntity> reviewEntities = repository.findByProductId(productId);
         List<Review> reviews = reviewEntities.stream().map(mapper::entityToApi).toList();
         reviews.forEach(r -> r.setServiceAddress(serviceUtil.getServiceAddress()));
@@ -47,7 +59,13 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Review createReview(Review review) {
+    public Mono<Review> createReview(Review review) {
+        return Mono.fromCallable(() -> createReviewInternal(review))
+                .log(log.getName(), Level.FINE)
+                .subscribeOn(jdbcScheduler);
+    }
+
+    private Review createReviewInternal(Review review) {
         ReviewEntity entity = mapper.apiToEntity(review);
         try {
             ReviewEntity newEntity = repository.save(entity);
@@ -61,8 +79,11 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public void deleteReviews(int productId) {
+    public Mono<Void> deleteReviews(int productId) {
         log.debug("deleteReviews: tries to delete reviews for the product with productId: {}", productId);
-        repository.deleteAll(repository.findByProductId(productId));
+        return Mono.fromRunnable(() -> repository.deleteAll(repository.findByProductId(productId)))
+                .log(log.getName(), Level.FINE)
+                .subscribeOn(jdbcScheduler)
+                .then();
     }
 }
