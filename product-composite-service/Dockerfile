@@ -13,4 +13,4 @@ COPY --from=builder extracted/application/ ./
 
 EXPOSE 8080
 EXPOSE 5005
-ENTRYPOINT ["java","-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005","org.springframework.boot.loader.JarLauncher"]
+ENTRYPOINT ["java","-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005","org.springframework.boot.loader.JarLauncher"]

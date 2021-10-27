@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.health.Health;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -35,7 +36,7 @@ import static lb.microservice.api.event.Event.Type.DELETE;
 @Component
 public class ProductCompositeIntegration implements ProductService, RecommendationService, ReviewService {
 
-    private static final String URL_TEMPLATE = "http://%s:%s/%s";
+    private static final String URL_TEMPLATE = "http://%s:%s";
 
     private final Scheduler publishEventScheduler;
     private final StreamBridge streamBridge;
@@ -65,14 +66,14 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         this.publishEventScheduler = publishEventScheduler;
         this.mapper = mapper;
         this.webClient = webClientBuilder.build();
-        this.productServiceUrl = String.format(URL_TEMPLATE, productServiceHost, productServicePort, "product");
-        this.recommendationServiceUrl = String.format(URL_TEMPLATE, recommendationServiceHost, recommendationServicePort, "recommendation?productId=");
-        this.reviewServiceUrl = String.format(URL_TEMPLATE, reviewServiceHost, reviewServicePort, "review?productId=");
+        this.productServiceUrl = String.format(URL_TEMPLATE, productServiceHost, productServicePort);
+        this.recommendationServiceUrl = String.format(URL_TEMPLATE, recommendationServiceHost, recommendationServicePort);
+        this.reviewServiceUrl = String.format(URL_TEMPLATE, reviewServiceHost, reviewServicePort);
     }
 
     @Override
     public Mono<Product> getProduct(int productId) {
-        String url = productServiceUrl + "/" + productId;
+        String url = productServiceUrl + "/product/" + productId;
         log.debug("Will call getProduct API by URL:{}", url);
         return webClient.get()
                 .uri(url)
@@ -99,7 +100,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 
     @Override
     public Flux<Recommendation> getRecommendations(int productId) {
-        String url = recommendationServiceUrl + productId;
+        String url = recommendationServiceUrl + "/recommendation?productId=" + productId;
         log.debug("Will call getRecommendations API by URL:{}", url);
         return webClient.get()
                 .uri(url)
@@ -126,7 +127,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 
     @Override
     public Flux<Review> getReviews(int productId) {
-        String url = reviewServiceUrl + productId;
+        String url = reviewServiceUrl + "/review?productId=" + productId;
 
         log.debug("Will call the getReviews API on URL: {}", url);
 
@@ -158,6 +159,27 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         } catch (IOException ioex) {
             return ex.getMessage();
         }
+    }
+
+    public Mono<Health> getProductHealth() {
+        return getHealth(productServiceUrl);
+    }
+
+    public Mono<Health> getRecommendationHealth() {
+        return getHealth(recommendationServiceUrl);
+    }
+
+    public Mono<Health> getReviewHealth() {
+        return getHealth(reviewServiceUrl);
+    }
+
+    private Mono<Health> getHealth(String url) {
+        url += "/actuator/health";
+        log.debug("Will call the Health API on URL: {}", url);
+        return webClient.get().uri(url).retrieve().bodyToMono(String.class)
+                .map(s -> new Health.Builder().up().build())
+                .onErrorResume(ex -> Mono.just(new Health.Builder().down(ex).build()))
+                .log(log.getName(), FINE);
     }
 
     private Throwable handleException(WebClientResponseException wcre) {

@@ -1,6 +1,9 @@
 server:
   port: 7002
 
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
+
 logging:
   level:
     root: INFO
