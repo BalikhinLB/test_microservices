@@ -21,7 +21,8 @@ import static lb.microservice.api.event.Event.Type.DELETE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT,
+        properties = "eureka.client.enabled=false")
 class ProductServiceApplicationTests extends AbstractMongoDbTestBase {
 
     @Autowired
@@ -125,6 +126,7 @@ class ProductServiceApplicationTests extends AbstractMongoDbTestBase {
         Event<Integer, Product> event = new Event<>(CREATE, productId, product);
         messageProcessor.accept(event);
     }
+
     private void sendDeleteProductEvent(int productId) {
         Event<Integer, Product> event = new Event<>(DELETE, productId, null);
         messageProcessor.accept(event);

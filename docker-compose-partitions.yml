@@ -65,8 +65,8 @@ services:
     build: product-composite-service
     mem_limit: 512m
     ports:
-      - 8080:8080
-      - 5005:5005
+      - "8080:8080"
+      - "5005:5005"
     environment:
       - SPRING_PROFILES_ACTIVE=docker,streaming_partitioned
     depends_on:
@@ -102,13 +102,18 @@ services:
     image: rabbitmq:3.9.8-management
     mem_limit: 512m
     ports:
-      - 5672:5672
-      - 15672:15672
+      - "5672:5672"
+      - "15672:15672"
     healthcheck:
       test: [ "CMD", "rabbitmqctl", "status" ]
       interval: 5s
       timeout: 2s
       retries: 60
+  eureka:
+    build: eureka-server
+    mem_limit: 512m
+    ports:
+      - "8761:8761"
 #u can delete build images:      docker image prune --filter label=stage=builder
 #mongoDb CLI: docker-compose exec mongodb mongo ––quiet
 #MySQL CLI: docker-compose exec mysql mysql -uuser -p review-db
