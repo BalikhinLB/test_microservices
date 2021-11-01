@@ -12,7 +12,7 @@ repositories {
 }
 
 ext {
-    springBootVersion = '2.5.4'
+    springBootVersion = '2.5.6'
     springDocApiVaersion = "1.5.10"
 }
 

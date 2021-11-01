@@ -58,6 +58,8 @@ logging:
     lb:
       microservice: DEBUG
 
+server.forward-headers-strategy: framework
+
 spring.application.name: product-composite
 
 app.eureka-server: localhost
