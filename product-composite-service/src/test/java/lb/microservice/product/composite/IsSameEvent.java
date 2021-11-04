@@ -20,10 +20,10 @@ public class IsSameEvent extends TypeSafeMatcher<String> {
 
     private ObjectMapper mapper = new ObjectMapper();
 
-    private Event expectedEvent;
+    private Event<Integer, ?> expectedEvent;
 
 
-    private IsSameEvent(Event expectedEvent) {
+    private IsSameEvent(Event<Integer, ?> expectedEvent) {
         mapper.registerModule(new JavaTimeModule());
         this.expectedEvent = expectedEvent;
     }
@@ -52,17 +52,18 @@ public class IsSameEvent extends TypeSafeMatcher<String> {
         description.appendText("expected to look like " + expectedJson);
     }
 
-    public static Matcher<String> sameEventExceptCreatedAt(Event expectedEvent) {
+    public static Matcher<String> sameEventExceptCreatedAt(Event<Integer, ?> expectedEvent) {
         return new IsSameEvent(expectedEvent);
     }
 
-    private Map<String, Object> getMapWithoutCreatedAt(Event event) {
+    private Map<String, Object> getMapWithoutCreatedAt(Event<Integer, ?> event) {
         Map<String, Object> mapEvent = convertObjectToMap(event);
         mapEvent.remove("eventCreatedAt");
         return mapEvent;
     }
 
-    private Map convertObjectToMap(Object object) {
+    @SuppressWarnings("unchecked")
+	private Map<String, Object> convertObjectToMap(Object object) {
         JsonNode node = mapper.convertValue(object, JsonNode.class);
         return mapper.convertValue(node, Map.class);
     }
@@ -75,7 +76,8 @@ public class IsSameEvent extends TypeSafeMatcher<String> {
         }
     }
 
-    private Map<String, Object> convertJsonStringToMap(String eventAsJson) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private Map<String, Object> convertJsonStringToMap(String eventAsJson) {
         try {
             return mapper.readValue(eventAsJson, new TypeReference<HashMap>(){});
         } catch (IOException e) {

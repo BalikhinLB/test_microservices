@@ -28,7 +28,8 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
         this.integration = integration;
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public Mono<ProductAggregate> getProduct(int productId) {
         return Mono.zip(values -> createProductAggregate((Product) values[0], (List<Recommendation>) values[1], (List<Review>) values[2], serviceUtil.getServiceAddress()),
                         integration.getProduct(productId), integration.getRecommendations(productId).collectList(), integration.getReviews(productId).collectList())
@@ -39,7 +40,7 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
     @Override
     public Mono<Void> createProduct(ProductAggregate body) {
         try {
-            List<Mono> monoList = new ArrayList<>();
+            List<Mono<?>> monoList = new ArrayList<>();
 
             log.debug("createCompositeProduct: creates a new composite entity for productId: {}", body.getProductId());
 

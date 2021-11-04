@@ -117,7 +117,7 @@ services:
     build: gateway
     mem_limit: 512m
     ports:
-      - "8080:8080"
+      - "8443:8443"
 #u can delete build images:      docker image prune --filter label=stage=builder
 #mongoDb CLI: docker-compose exec mongodb mongo ––quiet
 #MySQL CLI: docker-compose exec mysql mysql -uuser -p review-db

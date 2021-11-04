@@ -41,7 +41,6 @@ class MessagingTest {
     @Autowired
     private WebTestClient client;
 
-    @SuppressWarnings({"Sp", "SpringJavaInjectionPointsAutowiringInspection"})
     @Autowired
     private OutputDestination target;
 
@@ -87,15 +86,15 @@ class MessagingTest {
         assertEquals(1, productMessages.size());
 
         Event<Integer, Product> expectedProductEvent =
-                new Event(CREATE, composite.getProductId(), new Product(composite.getProductId(), composite.getName(), composite.getWeight(), null));
+                new Event<>(CREATE, composite.getProductId(), new Product(composite.getProductId(), composite.getName(), composite.getWeight(), null));
         MatcherAssert.assertThat(productMessages.get(0), Matchers.is(sameEventExceptCreatedAt(expectedProductEvent)));
 
         // Assert one create recommendation event queued up
         assertEquals(1, recommendationMessages.size());
 
         RecommendationSummary rec = composite.getRecommendations().get(0);
-        Event<Integer, Product> expectedRecommendationEvent =
-                new Event(CREATE, composite.getProductId(),
+        Event<Integer, Recommendation> expectedRecommendationEvent =
+                new Event<>(CREATE, composite.getProductId(),
                         new Recommendation(composite.getProductId(), rec.getRecommendationId(), rec.getAuthor(), rec.getRate(), rec.getContent(), null));
         MatcherAssert.assertThat(recommendationMessages.get(0), Matchers.is(sameEventExceptCreatedAt(expectedRecommendationEvent)));
 
@@ -103,8 +102,8 @@ class MessagingTest {
         assertEquals(1, reviewMessages.size());
 
         ReviewSummary rev = composite.getReviews().get(0);
-        Event<Integer, Product> expectedReviewEvent =
-                new Event(CREATE, composite.getProductId(), new Review(composite.getProductId(), rev.getReviewId(), rev.getAuthor(), rev.getSubject(), rev.getContent(), null));
+        Event<Integer, Review> expectedReviewEvent =
+                new Event<>(CREATE, composite.getProductId(), new Review(composite.getProductId(), rev.getReviewId(), rev.getAuthor(), rev.getSubject(), rev.getContent(), null));
         MatcherAssert.assertThat(reviewMessages.get(0), Matchers.is(sameEventExceptCreatedAt(expectedReviewEvent)));
     }
 
@@ -119,19 +118,19 @@ class MessagingTest {
         // Assert one delete product event queued up
         assertEquals(1, productMessages.size());
 
-        Event<Integer, Product> expectedProductEvent = new Event(DELETE, 1, null);
+        Event<Integer, Product> expectedProductEvent = new Event<>(DELETE, 1, null);
         MatcherAssert.assertThat(productMessages.get(0), Matchers.is(sameEventExceptCreatedAt(expectedProductEvent)));
 
         // Assert one delete recommendation event queued up
         assertEquals(1, recommendationMessages.size());
 
-        Event<Integer, Product> expectedRecommendationEvent = new Event(DELETE, 1, null);
+        Event<Integer, Product> expectedRecommendationEvent = new Event<>(DELETE, 1, null);
         MatcherAssert.assertThat(recommendationMessages.get(0), Matchers.is(sameEventExceptCreatedAt(expectedRecommendationEvent)));
 
         // Assert one delete review event queued up
         assertEquals(1, reviewMessages.size());
 
-        Event<Integer, Product> expectedReviewEvent = new Event(DELETE, 1, null);
+        Event<Integer, Product> expectedReviewEvent = new Event<>(DELETE, 1, null);
         MatcherAssert.assertThat(reviewMessages.get(0), Matchers.is(sameEventExceptCreatedAt(expectedReviewEvent)));
     }
 
@@ -168,7 +167,7 @@ class MessagingTest {
             return null;
         }
     }
-    public static Matcher<String> sameEventExceptCreatedAt(Event expectedEvent) {
+    public static Matcher<String> sameEventExceptCreatedAt(Event<Integer, ?> expectedEvent) {
         return IsSameEvent.sameEventExceptCreatedAt(expectedEvent);
     }
 
