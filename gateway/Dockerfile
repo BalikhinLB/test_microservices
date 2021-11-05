@@ -1,10 +1,10 @@
-FROM adoptopenjdk:16_36-jdk-hotspot as builder
+FROM openjdk:17 as builder
 LABEL stage=builder
 WORKDIR extracted
 ADD ./build/libs/*.jar app.jar
 RUN java -Djarmode=layertools -jar app.jar extract
 
-FROM adoptopenjdk:16_36-jdk-hotspot
+FROM openjdk:17
 WORKDIR application
 COPY --from=builder extracted/dependencies/ ./
 COPY --from=builder extracted/spring-boot-loader/ ./
