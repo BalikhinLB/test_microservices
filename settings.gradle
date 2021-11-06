@@ -1,5 +1,6 @@
 include ':api'
 include ':util'
+include ':authorization'
 include ':eureka-server'
 include ':gateway'
 include ':product-service'

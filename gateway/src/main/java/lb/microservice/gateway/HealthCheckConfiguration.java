@@ -27,7 +27,7 @@ public class HealthCheckConfiguration {
     public HealthCheckConfiguration(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
     }
-
+    
     @Bean
     ReactiveHealthContributor healthcheckMicroservices() {
         final Map<String, ReactiveHealthIndicator> registry = new LinkedHashMap<>();
@@ -35,6 +35,7 @@ public class HealthCheckConfiguration {
         registry.put("recommendation", () -> getHealth("http://recommendation"));
         registry.put("review", () -> getHealth("http://review"));
         registry.put("product-composite", () -> getHealth("http://product-composite"));
+        registry.put("authorization", () -> getHealth("http://authorization"));
         return CompositeReactiveHealthContributor.fromMap(registry);
     }
 
