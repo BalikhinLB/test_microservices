@@ -66,6 +66,9 @@ app:
   eureka-server: localhost
   eureka-username: guest
   eureka-password: guest
+  authorization: localhost
+  
+spring.security.oauth2.resourceserver.jwt.issuer-uri: http://${app.authorization}:9999
 
 eureka:
   client:
@@ -121,8 +124,8 @@ app:
   review-service:
     host: review
     port: 8080
-
-app.eureka-server: eureka
+  eureka-server: eureka
+  authorization: auth-server
 
 spring.rabbitmq.host: rabbitmq
 
