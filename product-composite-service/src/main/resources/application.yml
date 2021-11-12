@@ -4,7 +4,16 @@ management.endpoint.health.show-details: "ALWAYS"
 management.endpoints.web.exposure.include: "*"
 
 springdoc:
-  swagger-ui.path: /openapi/swagger-ui.html
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+    oauth2-redirect-url: https://localhost:8443/webjars/swagger-ui/oauth2-redirect.html
+    oauth:
+      clientId: writer
+      clientSecret: secret
+      useBasicAuthenticationWithAccessCodeGrant: true
+  oAuthFlow:
+    authorizationUrl: https://localhost:8443/oauth2/authorize
+    tokenUrl: https://localhost:8443/oauth2/token
   api-docs.path: /openapi/v3/api-docs
   packagesToScan: lb.microservice.product.composite
   pathsToMatch: /**
@@ -125,7 +134,7 @@ app:
     host: review
     port: 8080
   eureka-server: eureka
-  authorization: auth-server
+  authorization: authorization
 
 spring.rabbitmq.host: rabbitmq
 

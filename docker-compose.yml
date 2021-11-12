@@ -106,8 +106,6 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     build: authorization
     mem_limit: 512m
-    ports:
-      - "9999:9999"
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:9999/actuator/health"]
       interval: 5s

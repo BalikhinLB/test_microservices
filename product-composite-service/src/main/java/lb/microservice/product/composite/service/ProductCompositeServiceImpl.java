@@ -7,10 +7,16 @@ import lb.microservice.api.core.review.Review;
 import lb.microservice.util.ServiceUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -31,8 +37,15 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
     @SuppressWarnings("unchecked")
 	@Override
     public Mono<ProductAggregate> getProduct(int productId) {
-        return Mono.zip(values -> createProductAggregate((Product) values[0], (List<Recommendation>) values[1], (List<Review>) values[2], serviceUtil.getServiceAddress()),
-                        integration.getProduct(productId), integration.getRecommendations(productId).collectList(), integration.getReviews(productId).collectList())
+        return Mono.zip(values -> createProductAggregate((SecurityContext) values[0],
+                                (Product) values[1],
+                                (List<Recommendation>) values[2],
+                                (List<Review>) values[3],
+                                serviceUtil.getServiceAddress()),
+                        getSecurityContextMono(),
+                        integration.getProduct(productId),
+                        integration.getRecommendations(productId).collectList(),
+                        integration.getReviews(productId).collectList())
                 .doOnError(ex -> log.warn("getCompositeProduct filed: {}", ex.toString()))
                 .log(log.getName(), Level.FINE);
     }
@@ -41,6 +54,8 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
     public Mono<Void> createProduct(ProductAggregate body) {
         try {
             List<Mono<?>> monoList = new ArrayList<>();
+
+            monoList.add(getLogAuthorizationInfoMono());
 
             log.debug("createCompositeProduct: creates a new composite entity for productId: {}", body.getProductId());
 
@@ -79,6 +94,7 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
             log.debug("deleteCompositeProduct: Deletes a product aggregate for productId: {}", productId);
 
             return Mono.zip(r -> "",
+                            getLogAuthorizationInfoMono(),
                             integration.deleteProduct(productId),
                             integration.deleteRecommendations(productId),
                             integration.deleteReviews(productId))
@@ -91,7 +107,9 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
         }
     }
 
-    private ProductAggregate createProductAggregate(Product product, List<Recommendation> recommendations, List<Review> reviews, String productCompositeAddress) {
+    private ProductAggregate createProductAggregate(SecurityContext sc, Product product, List<Recommendation> recommendations,
+                                                    List<Review> reviews, String productCompositeAddress) {
+        logAuthorizationInfo(sc);
         List<RecommendationSummary> recommendationSummaries = recommendations == null ? null : recommendations.stream()
                 .map(r -> new RecommendationSummary(r.getRecommendationId(), r.getAuthor(), r.getRating(), r.getContent()))
                 .toList();
@@ -103,5 +121,37 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
         String reviewAddress = CollectionUtils.isEmpty(reviews) ? "" : reviews.get(0).getServiceAddress();
         var serviceAddress = new ServiceAddresses(productCompositeAddress, productAddress, recommendationAddress, reviewAddress);
         return new ProductAggregate(product, recommendationSummaries, reviewSummaries, serviceAddress);
+    }
+
+    private Mono<SecurityContext> getLogAuthorizationInfoMono() {
+        return getSecurityContextMono().doOnNext(this::logAuthorizationInfo);
+    }
+
+    private Mono<SecurityContext> getSecurityContextMono() {
+        return ReactiveSecurityContextHolder.getContext().defaultIfEmpty(new SecurityContextImpl());
+    }
+
+    private void logAuthorizationInfo(SecurityContext sc) {
+        if (sc != null && sc.getAuthentication() != null && sc.getAuthentication() instanceof JwtAuthenticationToken jwtAuthenticationToken) {
+            logAuthorizationInfo(jwtAuthenticationToken.getToken());
+        } else {
+            log.warn("No JWT based Authentication supplied");
+        }
+    }
+
+    private void logAuthorizationInfo(Jwt jwt) {
+        if (jwt == null) {
+            log.warn("No JWT supplied");
+        } else {
+            if (log.isDebugEnabled()) {
+                URL issuer = jwt.getIssuer();
+                List<String> audience = jwt.getAudience();
+                Object subject = jwt.getClaims().get("sub");
+                Object scopes = jwt.getClaims().get("scope");
+                Object expires = jwt.getClaims().get("exp");
+
+                log.debug("Authorization info: Subject: {}, scopes: {}, expires {}: issuer: {}, audience: {}", subject, scopes, expires, issuer, audience);
+            }
+        }
     }
 }

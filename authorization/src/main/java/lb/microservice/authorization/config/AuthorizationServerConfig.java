@@ -43,7 +43,7 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
@@ -70,7 +70,7 @@ public class AuthorizationServerConfig {
 	public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
 		RegisteredClient writerClient = RegisteredClient.withId(UUID.randomUUID().toString())
 			      .clientId("writer")
-			      .clientSecret("secretw")
+			      .clientSecret("secret")
 			      .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			      .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			      .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -86,7 +86,7 @@ public class AuthorizationServerConfig {
 
 			    RegisteredClient readerClient = RegisteredClient.withId(UUID.randomUUID().toString())
 			      .clientId("reader")
-			      .clientSecret("secretr")
+			      .clientSecret("secret")
 			      .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			      .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			      .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -98,7 +98,13 @@ public class AuthorizationServerConfig {
 			      .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 			      .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(1)).build())
 			      .build();
-    	return new InMemoryRegisteredClientRepository(writerClient, readerClient);
+
+		// Save registered client in db as if in-memory
+		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
+		registeredClientRepository.save(writerClient);
+		registeredClientRepository.save(readerClient);
+
+		return registeredClientRepository;
 	}
 	// @formatter:on
 
