@@ -8,3 +8,5 @@
 /.project
 /gradlew
 /gradlew.bat
+/auth0/
+/test.bash

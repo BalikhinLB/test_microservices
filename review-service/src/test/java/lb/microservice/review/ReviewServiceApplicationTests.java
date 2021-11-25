@@ -22,7 +22,7 @@ import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"eureka.client.enabled=false"})
+		properties = {"eureka.client.enabled=false","spring.cloud.config.enabled=false"})
 class ReviewServiceApplicationTests extends AbstractMySqlTestBase {
 	@Autowired
 	private WebTestClient client;

@@ -1,0 +1,6 @@
+server.error.include-message: always
+
+#for test
+spring.jpa.hibernate.ddl-auto: update
+
+spring.cloud.stream.defaultBinder: rabbit

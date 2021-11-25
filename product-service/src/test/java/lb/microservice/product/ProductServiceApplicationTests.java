@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT,
-        properties = "eureka.client.enabled=false")
+        properties = {"eureka.client.enabled=false","spring.cloud.config.enabled=false"})
 class ProductServiceApplicationTests extends AbstractMongoDbTestBase {
 
     @Autowired
@@ -88,7 +88,7 @@ class ProductServiceApplicationTests extends AbstractMongoDbTestBase {
         int productId = 1;
         assertNull(repository.findByProductId(productId).block());
         sendCreateProductEvent(productId);
-
+        assertNotNull(repository.findByProductId(productId).block());
         StepVerifier.create(repository.findByProductId(productId))
                 .expectNextMatches(productEntity -> productId == productEntity.getProductId())
                 .verifyComplete();

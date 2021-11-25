@@ -1,0 +1,12 @@
+server.port: 9999
+
+server.forward-headers-strategy: framework
+
+spring.application.name: authorization
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.springframework.security.oauth2: INFO

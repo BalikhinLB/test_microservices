@@ -37,6 +37,7 @@ import static org.springframework.http.HttpStatus.ACCEPTED;
         classes = {TestSecurityConfig.class},
         properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=",
                 "spring.main.allow-bean-definition-overriding=true",
+                "spring.cloud.config.enabled=false",
                 "eureka.client.enabled=false"})
 @Import({TestChannelBinderConfiguration.class})
 class MessagingTest {
