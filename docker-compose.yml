@@ -137,7 +137,7 @@ services:
       - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USR}
       - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PWD}
     volumes:
-      - $PWD/config-repo:/config-repo
+      - $PWD${CONFIG_PWD}:/config-repo
 #u can delete build images:      docker image prune --filter label=stage=builder
 #mongoDb CLI: docker-compose exec mongodb mongo ––quiet
 #MySQL CLI: docker-compose exec mysql mysql -uuser -p review-db

@@ -18,7 +18,6 @@ import reactor.core.publisher.Mono;
 
 import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.when;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
