@@ -176,6 +176,18 @@ services:
       - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PWD}
     volumes:
       - $PWD${CONFIG_PWD}:/config-repo
+      
+  zipkin:
+    image: openzipkin/zipkin:2.23.8
+    mem_limit: 1024m
+    environment:
+      - RABBIT_ADDRESSES=rabbitmq
+      - STORAGE_TYPE=mem
+    ports:
+      - 9411:9411
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 #u can delete build images:      docker image prune --filter label=stage=builder
 #mongoDb CLI: docker-compose exec mongodb mongo ––quiet
 #MySQL CLI: docker-compose exec mysql mysql -uuser -p review-db

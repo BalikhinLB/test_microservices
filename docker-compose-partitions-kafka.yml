@@ -141,7 +141,7 @@ services:
       - KAFKA_ADVERTISED_HOST_NAME=zookeeper
 
   eureka:
-    build: eureka-server
+    build: eureka-server,kafka
     mem_limit: 512m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
@@ -150,7 +150,7 @@ services:
 
   gateway:
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,kafka
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     build: gateway
@@ -163,7 +163,7 @@ services:
 
   authorization:
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,kafka
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     build: authorization
@@ -184,6 +184,17 @@ services:
       - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PWD}
     volumes:
       - $PWD${CONFIG_PWD}:/config-repo
+            
+  zipkin:
+    image: openzipkin/zipkin:2.23.8
+    mem_limit: 1024m
+    environment:
+      - STORAGE_TYPE=mem
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    ports:
+      - 9411:9411
+    depends_on:
+    - kafka
 #u can delete build images:      docker image prune --filter label=stage=builder
 #mongoDb CLI: docker-compose exec mongodb mongo ––quiet
 #MySQL CLI: docker-compose exec mysql mysql -uuser -p review-db
