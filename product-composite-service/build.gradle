@@ -15,8 +15,9 @@ jar {
 	enabled = false
 }
 ext{
-	springDocApiVaersion = "1.5.10"
+	springDocApiVersion = "1.5.10"
 	springCloudVersion = "2020.0.4"
+	resilience4jVersion = "1.7.0"
 }
 
 dependencies {
@@ -30,10 +31,12 @@ dependencies {
   	implementation 'org.springframework.security:spring-security-oauth2-jose'
 	implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
 	implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
-	implementation "org.springdoc:springdoc-openapi-webflux-ui:${springDocApiVaersion}"
+	implementation "org.springdoc:springdoc-openapi-webflux-ui:${springDocApiVersion}"
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0'
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
 	implementation 'org.springframework.retry:spring-retry'
+	implementation "io.github.resilience4j:resilience4j-spring-boot2:${resilience4jVersion}"
+	implementation "io.github.resilience4j:resilience4j-reactor:${resilience4jVersion}"
     implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
 	implementation 'org.springframework.cloud:spring-cloud-sleuth-zipkin'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -44,6 +47,19 @@ dependencies {
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+	dependencies {
+		dependency "io.github.resilience4j:resilience4j-spring:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-annotations:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-consumer:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-core:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-circuitbreaker:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-ratelimiter:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-retry:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-bulkhead:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-timelimiter:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-micrometer:${resilience4jVersion}"
+		dependency "io.github.resilience4j:resilience4j-circularbuffer:${resilience4jVersion}"
 	}
 }
 

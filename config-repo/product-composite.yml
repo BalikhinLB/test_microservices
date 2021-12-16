@@ -57,6 +57,35 @@ api:
         The implementation of the delete method is idempotent, i.e. it can be called several times with the same response.
         This means that a delete request of a non-existing product will return **200 Ok**.
 
+resilience4j.timelimiter:
+  instances:
+    product:
+      timeoutDuration: 2s
+
+resilience4j.retry:
+  instances:
+    product:
+      maxAttempts: 3
+      waitDuration: 1000
+      retryExceptions:
+        - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+
+management.health.circuitbreakers.enabled: true
+
+resilience4j.circuitbreaker:
+  instances:
+    product:
+      allowHealthIndicatorToFail: false
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 5
+      failureRateThreshold: 50
+      waitDurationInOpenState: 10000
+      permittedNumberOfCallsInHalfOpenState: 3
+      automaticTransitionFromOpenToHalfOpenEnabled: true
+      ignoreExceptions:
+        - lb.microservice.api.exceptions.InvalidInputException
+        - lb.microservice.api.exceptions.NotFoundException
 
 logging:
   level:

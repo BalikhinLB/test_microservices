@@ -1,6 +1,10 @@
 package lb.microservice.product.composite.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lb.microservice.api.core.product.Product;
 import lb.microservice.api.core.product.ProductService;
 import lb.microservice.api.core.recommendation.Recommendation;
@@ -11,6 +15,7 @@ import lb.microservice.api.event.Event;
 import lb.microservice.api.exceptions.InvalidInputException;
 import lb.microservice.api.exceptions.NotFoundException;
 import lb.microservice.util.HttpErrorInfo;
+import lb.microservice.util.ServiceUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +46,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
     private static final String RECOMMENDATION_SERVICE_URL = "http://recommendation";
     private static final String REVIEW_SERVICE_URL = "http://review";
 
+    private final ServiceUtil serviceUtil;
     private final Scheduler publishEventScheduler;
     private final StreamBridge streamBridge;
     private final WebClient webClient;
@@ -48,14 +54,19 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 
     @Autowired
     public ProductCompositeIntegration(@Qualifier("publishEventScheduler") Scheduler publishEventScheduler,
-                                       StreamBridge streamBridge, ObjectMapper mapper, WebClient.Builder webClientBuilder) {
+                                       StreamBridge streamBridge, ObjectMapper mapper, WebClient.Builder webClientBuilder,
+                                       ServiceUtil serviceUtil) {
 
         this.streamBridge = streamBridge;
         this.publishEventScheduler = publishEventScheduler;
         this.mapper = mapper;
         this.webClient = webClientBuilder.build();
+        this.serviceUtil = serviceUtil;
     }
 
+    @Retry(name = "product")
+    @TimeLimiter(name = "product")
+    @CircuitBreaker(name = "product", fallbackMethod = "getProductFallbackValue")
     @Override
     public Mono<Product> getProduct(int productId, int delay, int faultPercent) {
         URI url = UriComponentsBuilder.fromUriString(PRODUCT_SERVICE_URL + "/product/{productId}?delay={delay}"
@@ -68,6 +79,10 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
                 .bodyToMono(Product.class)
                 .log(log.getName(), FINE)
                 .onErrorMap(WebClientResponseException.class, this::handleException);
+    }
+
+    private Mono<Product> getProductFallbackValue(int productId, int delay, int faultPercent, CallNotPermittedException ex){
+        return Mono.just(new Product(productId, "Fallback product" + productId, productId, serviceUtil.getServiceAddress()));
     }
 
     @Override
