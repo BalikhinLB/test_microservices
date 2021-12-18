@@ -91,6 +91,8 @@ services:
     depends_on:
       kafka:
         condition: service_started
+      authorization:
+        condition: service_healthy
 
   mongodb:
     image: mongo:5.0.3

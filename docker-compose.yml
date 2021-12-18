@@ -52,6 +52,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+      authorization:
+        condition: service_healthy
 
   mongodb:
     image: mongo:5.0.3
